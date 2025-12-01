@@ -1,0 +1,169 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background: hsl(0, 0%, 96%);
+    color: #333;
+    padding-top: 80px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #333;
+    color: white;
+    padding: 20px;
+    font-size: small;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+#about {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 50px;
+    background: white;
+}
+
+#about img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 50px;
+}
+
+.stage {
+    background: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    
+    /* CONSERVATION DE L'EFFET DE ZOOM */
+    transition: transform 0.3s, background 0.3s; /* IMPORTANT pour l'animation */
+    
+    /* MAINTENIR POUR LE POSITIONNEMENT DE L'INFO BULLE */
+    position: relative; 
+    z-index: 1; /* Assurez-vous qu'elle est au-dessus des autres éléments */
+}
+
+.stage:hover {
+    transform: scale(1.05); /* CONSERVE LE ZOOM */
+    background: #e0e0e0;
+}
+
+/* Style de l'infobulle (par défaut invisible) */
+.tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    
+    /* Style de la boîte */
+    width: 250px;
+    background-color: #333; /* Couleur plus foncée pour le contraste */
+    color: white;
+    text-align: center;
+    padding: 10px;
+    border-radius: 6px;
+    
+    /* Positionnement */
+    position: absolute;
+    z-index: 99; /* Très élevé pour s'assurer qu'il est toujours visible */
+    
+    /* Placement : juste en dessous de la case */
+    top: 100%; /* Positionné juste en bas du .stage */
+    margin-top: 10px; /* Ajoute un petit espace entre la boîte et l'infobulle */
+    left: 50%;
+    transform: translateX(-50%); /* Centre horizontalement */
+    
+    /* Optionnel : transition pour une apparition/disparition plus agréable */
+    transition: opacity 0.3s;
+    
+    /* Pour éviter que le zoom du parent ne le déplace trop */
+    pointer-events: none; /* Empêche l'infobulle elle-même de déclencher un survol */
+}
+
+/* Afficher l'infobulle au survol du .stage */
+.stage:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+.skill {
+    background: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.skill:hover {
+    transform: scale(1.05);
+    background: #e0e0e0;
+}
+
+#contact form {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    margin: auto;
+}
+
+#contact input, #contact textarea, #contact button {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #333;
+    color: white;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    #about {
+        flex-direction: column;
+        text-align: center;
+    }
+   
+    #about img {
+        margin-bottom: 20px;
+    }
+   
+    .grid-container {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}

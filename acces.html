@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Accès sécurisé</title>
+</head>
+<body>
+    <h2>Entrez le mot de passe :</h2>
+
+    <input type="password" id="mdp">
+    <button onclick="verifier()">Valider</button>
+
+    <p id="message" style="color:red;"></p>
+
+    <script>
+        async function verifier() {
+            const mdpEntre = document.getElementById("mdp").value;
+            const message = document.getElementById("message");
+
+            try {
+                // Charger le fichier des mots de passe
+                const response = await fetch("mdp.txt");
+                const contenu = await response.text();
+
+                // Séparer en lignes
+                const listeMDP = contenu.split("\n").map(l => l.trim());
+
+                if (listeMDP.includes(mdpEntre)) {
+                    // Redirection si le mdp est trouvé
+                    window.location.href = "index.html";
+                } else {
+                    message.textContent = "Mot de passe incorrect.";
+                }
+            } catch (e) {
+                message.textContent = "Erreur : impossible de lire le fichier motsdepasse.txt";
+            }
+        }
+    </script>
+</body>
+</html>
