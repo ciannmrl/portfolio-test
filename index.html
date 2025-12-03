@@ -1,106 +1,103 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Protégée avec Hachage et Journalisation</title>
-    <style>
-        #contenu-secret { border: 2px solid green; padding: 20px; margin-top: 20px; background-color: #e6ffe6; }
-        input { display: block; margin-bottom: 10px; padding: 5px; width: 250px; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Protégée avec Hachage et Journalisation</title>
+    <style>
+        #contenu-secret { border: 2px solid green; padding: 20px; margin-top: 20px; background-color: #e6ffe6; }
+        input { display: block; margin-bottom: 10px; padding: 5px; width: 250px; }
+    </style>
 </head>
 <body>
 
-    <h1>Accès Sécurisé</h1>
-    <p>Veuillez entrer le nom de l'entreprise et le mot de passe.</p>
+    <h1>Accès Sécurisé</h1>
+    <p>Veuillez entrer le nom de l'entreprise et le mot de passe.</p>
 
-    <div id="zone-connexion">
-        <input type="text" id="inputEntreprise" placeholder="Nom de l'entreprise (Facultatif)">
-        <input type="password" id="inputMdp" placeholder="Mot de passe">
-        <button onclick="checkMdp()">Accéder et Journaliser</button>
-        <p id="message"></p>
-    </div>
-    
-    <div id="contenu-secret" style="display:none;">
-        <h2>🔐 Contenu Secret</h2>
-        <p>L'accès a été enregistré de manière sécurisée (hachée).</p>
-    </div>
+    <div id="zone-connexion">
+        <input type="text" id="inputEntreprise" placeholder="Nom de l'entreprise (Facultatif)">
+        <input type="password" id="inputMdp" placeholder="Mot de passe">
+        <button onclick="checkMdp()">Accéder et Journaliser</button>
+        <p id="message"></p>
+    </div>
+    
+    <div id="contenu-secret" style="display:none;">
+        <h2>🔐 Contenu Secret</h2>
+        <p>L'accès a été enregistré de manière sécurisée (hachée).</p>
+    </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
 
-    <script>
-        // === 1. CONFIGURATION FIREBASE ===
-        const firebaseConfig = {
-          apiKey: "AIzaSyDE22iYFKMDCrwquJ5sM4YOxuzePoCgjAc", 
-          authDomain: "portfolio-81173.firebaseapp.com",
-          projectId: "portfolio-81173",
-          storageBucket: "portfolio-81173.appspot.com", 
-          messagingSenderId: "254594693802",
-          appId: "1:254594693802:web:8872583f8671d7d135eed3",
-          measurementId: "G-488S65WVH4"
-        };
+    <script>
+        // === 1. CONFIGURATION FIREBASE ===
+        const firebaseConfig = {
+          apiKey: "AIzaSyDE22iYFKMDCrwquJ5sM4YOxuzePoCgjAc", 
+          authDomain: "portfolio-81173.firebaseapp.com",
+          projectId: "portfolio-81173",
+          storageBucket: "portfolio-81173.appspot.com", 
+          messagingSenderId: "254594693802",
+          appId: "1:254594693802:web:8872583f8671d7d135eed3",
+          measurementId: "G-488S65WVH4"
+        };
 
-        // Initialisation de Firebase et de Firestore
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        // === 2. MOT DE PASSE HACHÉ (Votre HASH valide) ===
-        const HACHAGE_CORRECT = "0e6a8e0b849ed9b064c5a25e1ee5592f427e3eb9d250e42069ce46147d00e8d4"; 
+        // Initialisation de Firebase et de Firestore
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // === 2. MOT DE PASSE HACHÉ (Votre HASH valide) ===
+        const HACHAGE_CORRECT = "0e6a8e0b849ed9b064c5a25e1ee5592f427e3eb9d250e42069ce46147d00e8d4"; 
 
-        // Fonction de hachage SHA-256 (cryptographie Web API)
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        // Fonction de hachage SHA-256 (cryptographie Web API)
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
-        // Fonction de vérification et de journalisation
-        async function checkMdp() {
-            const inputMdp = document.getElementById('inputMdp');
-            const inputEntreprise = document.getElementById('inputEntreprise');
-            const messageElement = document.getElementById('message');
-            const secretContent = document.getElementById('contenu-secret');
-            const connexionDiv = document.getElementById('zone-connexion');
-            
-            const mdpEntre = inputMdp.value;
-            const nomEntreprise = inputEntreprise.value.trim();
-            
-            // Hachage du mot de passe entré par l'utilisateur
-            const mdpHacheEntre = await hashPassword(mdpEntre);
-            
-            // Vérification si le hachage correspond à la valeur de référence
-            if (mdpHacheEntre === HACHAGE_CORRECT) {
-                
-                messageElement.textContent = "Accès autorisé ! Journalisation en cours...";
-                
-                // Enregistrement dans la collection "log_mdp"
-                await db.collection("log_mdp").add({
-                    // MODIFICATION JAVASCRIPT ICI : Gestion du champ facultatif
-                    nom_entreprise: nomEntreprise || "Non spécifiée", 
-                    
-                    mot_de_passe_hache_utilise: mdpHacheEntre,
-                    date: firebase.firestore.FieldValue.serverTimestamp(), 
-                    statut: "SUCCES"
-                })
-                .then(() => {
-                    messageElement.textContent = "Accès autorisé et utilisation journalisée !";
-                    connexionDiv.style.display = 'none';
-                    secretContent.style.display = 'block';
-                })
-                .catch((error) => {
-                    messageElement.textContent = "Accès autorisé, mais ERREUR de journalisation.";
-                    connexionDiv.style.display = 'none';
-                    secretContent.style.display = 'block'; 
-                    console.error("Erreur de journalisation: ", error);
-                });
-                
-            } else {
-                messageElement.textContent = "Mot de passe incorrect.";
-            }
-        }
-    </script>
+        // Fonction de vérification et de journalisation
+        async function checkMdp() {
+            const inputMdp = document.getElementById('inputMdp');
+            const inputEntreprise = document.getElementById('inputEntreprise');
+            const messageElement = document.getElementById('message');
+            
+            const mdpEntre = inputMdp.value;
+            const nomEntreprise = inputEntreprise.value.trim();
+            
+            // Hachage du mot de passe entré par l'utilisateur
+            const mdpHacheEntre = await hashPassword(mdpEntre);
+            
+            // Vérification si le hachage correspond à la valeur de référence
+            if (mdpHacheEntre === HACHAGE_CORRECT) {
+                
+                messageElement.textContent = "Accès autorisé ! Journalisation en cours...";
+                
+                // Enregistrement dans la collection "log_mdp"
+                await db.collection("log_mdp").add({
+                    nom_entreprise: nomEntreprise || "Non spécifiée", 
+                    mot_de_passe_hache_utilise: mdpHacheEntre,
+                    date: firebase.firestore.FieldValue.serverTimestamp(), 
+                    statut: "SUCCES"
+                })
+                .then(() => {
+                    messageElement.textContent = "Accès autorisé et utilisation journalisée ! Redirection...";
+                    
+                    // REDIRECTION VERS PAGE1.HTML
+                    window.location.href = 'page1.html'; 
+                })
+                .catch((error) => {
+                    // Si la journalisation échoue, nous affichons l'erreur mais ne bloquons pas l'accès
+                    messageElement.textContent = "Accès autorisé, mais ERREUR de journalisation. Redirection...";
+                    console.error("Erreur de journalisation: ", error);
+                    window.location.href = 'page1.html'; 
+                });
+                
+            } else {
+                messageElement.textContent = "Mot de passe incorrect.";
+            }
+        }
+    </script>
 </body>
 </html>
