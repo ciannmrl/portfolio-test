@@ -1,71 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Accès sécurisé</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Protégée avec Hachage et Journalisation</title>
+    <style>
+        #contenu-secret { border: 2px solid green; padding: 20px; margin-top: 20px; background-color: #e6ffe6; }
+        input { display: block; margin-bottom: 10px; padding: 5px; width: 250px; }
+    </style>
 </head>
 <body>
-    <center><h2>Entrez le mot de passe :</h2></center>
 
-    <center><input type="password" id="mdp"></center>
-    <br>
-    <br>
-    <center><button onclick="verifier()">Valider</button></center>
+    <h1>Accès Sécurisé</h1>
+    <p>Veuillez entrer le nom de l'entreprise et le mot de passe.</p>
 
-    <center><p id="message" style="color:red;"></p></center>
+    <div id="zone-connexion">
+        <input type="text" id="inputEntreprise" placeholder="Nom de l'entreprise (Facultatif)">
+        <input type="password" id="inputMdp" placeholder="Mot de passe">
+        <button onclick="checkMdp()">Accéder et Journaliser</button>
+        <p id="message"></p>
+    </div>
+    
+    <div id="contenu-secret" style="display:none;">
+        <h2>🔐 Contenu Secret</h2>
+        <p>L'accès a été enregistré de manière sécurisée (hachée).</p>
+    </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
 
     <script>
-        async function verifier() {
-            const mdpEntre = document.getElementById("mdp").value;
-            const message = document.getElementById("message");
+        // === 1. CONFIGURATION FIREBASE ===
+        const firebaseConfig = {
+          apiKey: "AIzaSyDE22iYFKMDCrwquJ5sM4YOxuzePoCgjAc", 
+          authDomain: "portfolio-81173.firebaseapp.com",
+          projectId: "portfolio-81173",
+          storageBucket: "portfolio-81173.appspot.com", 
+          messagingSenderId: "254594693802",
+          appId: "1:254594693802:web:8872583f8671d7d135eed3",
+          measurementId: "G-488S65WVH4"
+        };
 
-            try {
-                // Charger le fichier des mots de passe
-                const response = await fetch("mdp.txt");
-                const contenu = await response.text();
+        // Initialisation de Firebase et de Firestore
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // === 2. MOT DE PASSE HACHÉ (Votre HASH valide) ===
+        const HACHAGE_CORRECT = "0e6a8e0b849ed9b064c5a25e1ee5592f427e3eb9d250e42069ce46147d00e8d4"; 
 
-                // Séparer en lignes
-                const listeMDP = contenu.split("\n").map(l => l.trim());
+        // Fonction de hachage SHA-256 (cryptographie Web API)
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
-                if (listeMDP.includes(mdpEntre)) {
-                    // Redirection si le mdp est trouvé
-                    window.location.href = "page1.html";
-                } else {
-                    message.textContent = "Mot de passe incorrect.";
-                }
-            } catch (e) {
-                message.textContent = "Erreur : impossible de lire le fichier motsdepasse.txt";
+        // Fonction de vérification et de journalisation
+        async function checkMdp() {
+            const inputMdp = document.getElementById('inputMdp');
+            const inputEntreprise = document.getElementById('inputEntreprise');
+            const messageElement = document.getElementById('message');
+            const secretContent = document.getElementById('contenu-secret');
+            const connexionDiv = document.getElementById('zone-connexion');
+            
+            const mdpEntre = inputMdp.value;
+            const nomEntreprise = inputEntreprise.value.trim();
+            
+            // Hachage du mot de passe entré par l'utilisateur
+            const mdpHacheEntre = await hashPassword(mdpEntre);
+            
+            // Vérification si le hachage correspond à la valeur de référence
+            if (mdpHacheEntre === HACHAGE_CORRECT) {
+                
+                messageElement.textContent = "Accès autorisé ! Journalisation en cours...";
+                
+                // Enregistrement dans la collection "log_mdp"
+                await db.collection("log_mdp").add({
+                    // MODIFICATION JAVASCRIPT ICI : Gestion du champ facultatif
+                    nom_entreprise: nomEntreprise || "Non spécifiée", 
+                    
+                    mot_de_passe_hache_utilise: mdpHacheEntre,
+                    date: firebase.firestore.FieldValue.serverTimestamp(), 
+                    statut: "SUCCES"
+                })
+                .then(() => {
+                    messageElement.textContent = "Accès autorisé et utilisation journalisée !";
+                    connexionDiv.style.display = 'none';
+                    secretContent.style.display = 'block';
+                })
+                .catch((error) => {
+                    messageElement.textContent = "Accès autorisé, mais ERREUR de journalisation.";
+                    connexionDiv.style.display = 'none';
+                    secretContent.style.display = 'block'; 
+                    console.error("Erreur de journalisation: ", error);
+                });
+                
+            } else {
+                messageElement.textContent = "Mot de passe incorrect.";
             }
         }
     </script>
-
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDe22iYFKMdCRwqju5sM4YOxuzePoCgjAc",
-    authDomain: "portfolio-81173.firebaseapp.com",
-    projectId: "portfolio-81173",
-    storageBucket: "portfolio-81173.firebasestorage.app",
-    messagingSenderId: "254594693802",
-    appId: "1:254594693802:web:8872583f8671d7d135eed3",
-    measurementId: "G-488S65WVH4"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
 </body>
 </html>
-
-
-
-
