@@ -50,12 +50,18 @@
     </section>
     
     <section id="contact">
-        <form>
-            <input type="text" placeholder="Votre nom">
-            <input type="email" placeholder="Votre email">
-            <textarea placeholder="Votre message"></textarea>
-            <button type="submit">Envoyer</button>
-        </form>
+        <form action="https://formspree.io/f/mnnezybk" method="POST">
+    		<label>Nom :</label>
+    			<input type="text" name="name" required>
+
+    		<label>Email :</label>
+    			<input type="email" name="email" required>
+
+    		<label>Message :</label>
+    			<textarea name="message" required></textarea>
+
+    		<button type="submit">Envoyer</button>
+		</form>
     </section>
     
     <footer>
@@ -68,4 +74,5 @@
     </footer>
 </body>
 </html>
+
 
